@@ -1,0 +1,5 @@
+{
+  "name": "PromptArch - AI Prompt Optimizer",
+  "description": "A structured library to organize, optimize, and archive AI prompts based on Roles and Scenarios using Gemini.",
+  "requestFramePermissions": []
+}
