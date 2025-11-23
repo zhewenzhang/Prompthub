@@ -14,6 +14,52 @@ export const checkSupabaseConnection = async (settings: AppSettings): Promise<bo
   return !!supabase;
 };
 
+// --- Auth Functions ---
+
+export const signUpUser = async (settings: AppSettings, email: string, password: string, username: string) => {
+  const supabase = getSupabaseClient(settings);
+  if (!supabase) throw new Error("Supabase not configured");
+  
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        username: username,
+      },
+    },
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const signInUser = async (settings: AppSettings, email: string, password: string) => {
+  const supabase = getSupabaseClient(settings);
+  if (!supabase) throw new Error("Supabase not configured");
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+export const signOutUser = async (settings: AppSettings) => {
+  const supabase = getSupabaseClient(settings);
+  if (!supabase) return;
+  await supabase.auth.signOut();
+};
+
+export const getSession = async (settings: AppSettings) => {
+  const supabase = getSupabaseClient(settings);
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session;
+};
+
 // --- Mappers (Frontend CamelCase <-> DB SnakeCase) ---
 
 const mapRoleToDb = (r: Role) => ({
@@ -39,11 +85,11 @@ const mapPromptToDb = (p: Prompt) => ({
   title: p.title,
   content: p.content,
   optimized_content: p.optimizedContent,
-  tags: p.tags,
+  tags: p.tags || [],
   version: p.version,
   created_at: p.createdAt,
   updated_at: p.updatedAt,
-  history: p.history // jsonb is fine as is
+  history: p.history || []
 });
 
 const mapRoleFromDb = (r: any): Role => ({
@@ -81,44 +127,81 @@ const mapPromptFromDb = (p: any): Prompt => ({
 export const upsertRole = async (role: Role, settings: AppSettings) => {
   const supabase = getSupabaseClient(settings);
   if (!supabase) return;
-  const { error } = await supabase.from('roles').upsert(mapRoleToDb(role));
-  if (error) throw error;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  // Include user_id in the payload
+  const payload = {
+    ...mapRoleToDb(role),
+    user_id: user.id
+  };
+
+  const { error } = await supabase.from('roles').upsert(payload, { onConflict: 'id' });
+  if (error) {
+      console.error("Upsert Role Error:", error);
+      throw new Error(`Role Save Failed: ${error.message}`);
+  }
 };
 
 export const deleteRole = async (id: string, settings: AppSettings) => {
   const supabase = getSupabaseClient(settings);
   if (!supabase) return;
-  // Assuming ON DELETE CASCADE is set in SQL for Scenarios/Prompts
+  // RLS will ensure we only delete if it belongs to the user
   const { error } = await supabase.from('roles').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 };
 
 export const upsertScenario = async (scenario: Scenario, settings: AppSettings) => {
   const supabase = getSupabaseClient(settings);
   if (!supabase) return;
-  const { error } = await supabase.from('scenarios').upsert(mapScenarioToDb(scenario));
-  if (error) throw error;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  const payload = {
+    ...mapScenarioToDb(scenario),
+    user_id: user.id
+  };
+
+  const { error } = await supabase.from('scenarios').upsert(payload, { onConflict: 'id' });
+  if (error) {
+      console.error("Upsert Scenario Error:", error);
+      throw new Error(`Scenario Save Failed: ${error.message}`);
+  }
 };
 
 export const deleteScenario = async (id: string, settings: AppSettings) => {
   const supabase = getSupabaseClient(settings);
   if (!supabase) return;
   const { error } = await supabase.from('scenarios').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 };
 
 export const upsertPrompt = async (prompt: Prompt, settings: AppSettings) => {
   const supabase = getSupabaseClient(settings);
   if (!supabase) return;
-  const { error } = await supabase.from('prompts').upsert(mapPromptToDb(prompt));
-  if (error) throw error;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  const payload = {
+    ...mapPromptToDb(prompt),
+    user_id: user.id
+  };
+
+  const { error } = await supabase.from('prompts').upsert(payload, { onConflict: 'id' });
+  if (error) {
+      console.error("Upsert Prompt Error:", error);
+      throw new Error(`Prompt Save Failed: ${error.message}`);
+  }
 };
 
 export const deletePrompt = async (id: string, settings: AppSettings) => {
   const supabase = getSupabaseClient(settings);
   if (!supabase) return;
   const { error } = await supabase.from('prompts').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 };
 
 // --- Bulk Sync Functions (Backup/Restore) ---
@@ -127,27 +210,45 @@ export const uploadBackupToSupabase = async (data: AppData, settings: AppSetting
     const supabase = getSupabaseClient(settings);
     if (!supabase) throw new Error("Supabase not configured");
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     // 1. Upsert Roles
     if (data.roles.length > 0) {
+      const rolesPayload = data.roles.map(r => ({
+        ...mapRoleToDb(r),
+        user_id: user.id
+      }));
+      
       const { error: rError } = await supabase
         .from('roles')
-        .upsert(data.roles.map(mapRoleToDb), { onConflict: 'id' });
+        .upsert(rolesPayload, { onConflict: 'id' });
       if (rError) throw new Error(`Roles Sync Error: ${rError.message}`);
     }
 
     // 2. Upsert Scenarios
     if (data.scenarios.length > 0) {
+      const scenariosPayload = data.scenarios.map(s => ({
+        ...mapScenarioToDb(s),
+        user_id: user.id
+      }));
+
       const { error: sError } = await supabase
         .from('scenarios')
-        .upsert(data.scenarios.map(mapScenarioToDb), { onConflict: 'id' });
+        .upsert(scenariosPayload, { onConflict: 'id' });
       if (sError) throw new Error(`Scenarios Sync Error: ${sError.message}`);
     }
 
     // 3. Upsert Prompts
     if (data.prompts.length > 0) {
+      const promptsPayload = data.prompts.map(p => ({
+        ...mapPromptToDb(p),
+        user_id: user.id
+      }));
+
       const { error: pError } = await supabase
         .from('prompts')
-        .upsert(data.prompts.map(mapPromptToDb), { onConflict: 'id' });
+        .upsert(promptsPayload, { onConflict: 'id' });
       if (pError) throw new Error(`Prompts Sync Error: ${pError.message}`);
     }
 
@@ -158,7 +259,7 @@ export const downloadBackupFromSupabase = async (settings: AppSettings): Promise
     const supabase = getSupabaseClient(settings);
     if (!supabase) throw new Error("Supabase not configured");
 
-    // Fetch all data in parallel
+    // RLS will ensure we only select rows where user_id = auth.uid()
     const [rolesRes, scenariosRes, promptsRes] = await Promise.all([
       supabase.from('roles').select('*'),
       supabase.from('scenarios').select('*'),

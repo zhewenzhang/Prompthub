@@ -22,7 +22,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Cpu,
-  Loader2
+  Loader2,
+  LogOut,
+  Mail,
+  Lock,
+  ArrowRight
 } from 'lucide-react';
 import { Role, Scenario, Prompt, PromptHistoryItem, AppSettings, AppData, ViewMode } from './types';
 import { optimizePromptWithAI, generateIdeasWithAI } from './services/aiService';
@@ -32,7 +36,11 @@ import {
   upsertRole, 
   deleteRole, 
   upsertScenario, 
-  upsertPrompt 
+  upsertPrompt,
+  signInUser,
+  signUpUser,
+  signOutUser,
+  getSession
 } from './services/supabaseService';
 
 // --- Helper Components ---
@@ -99,10 +107,156 @@ const DEFAULT_SETTINGS: AppSettings = {
   }
 };
 
+// --- Auth Component ---
+
+const AuthPage = ({ settings, onLoginSuccess }: { settings: AppSettings, onLoginSuccess: (user: any) => void }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (isLogin) {
+        const { session, user } = await signInUser(settings, email, password);
+        if (user && session) {
+          onLoginSuccess(user);
+        } else {
+           setError("Login failed. Please check credentials.");
+        }
+      } else {
+        const { session, user } = await signUpUser(settings, email, password, username);
+        if (user) {
+          if (!session) {
+            setError("Registration successful! Please verify your email if required, then login.");
+            setIsLogin(true);
+          } else {
+            onLoginSuccess(user);
+          }
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "Authentication failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in duration-300">
+        
+        {/* Left Side (for larger screens visually, top for mobile) */}
+        
+        <div className="w-full p-8">
+           <div className="mb-8 text-center">
+             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 mb-3">
+               <Database className="w-6 h-6" />
+             </div>
+             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">PromptArch</h1>
+             <p className="text-slate-500 text-sm mt-1">
+               {isLogin ? "Welcome back! Please login." : "Create your account to start."}
+             </p>
+           </div>
+
+           <form onSubmit={handleAuth} className="space-y-4">
+              {!isLogin && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1 ml-1">Username</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="text" 
+                      required={!isLogin}
+                      placeholder="johndoe"
+                      className="w-full pl-10 pr-3 py-2 bg-white text-black placeholder:text-gray-400 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      value={username}
+                      onChange={e => setUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1 ml-1">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="email" 
+                    required
+                    placeholder="name@example.com"
+                    className="w-full pl-10 pr-3 py-2 bg-white text-black placeholder:text-gray-400 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1 ml-1">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="password" 
+                    required
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-3 py-2 bg-white text-black placeholder:text-gray-400 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-start space-x-2 text-red-600 text-xs">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md shadow-indigo-200 flex items-center justify-center"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                  <>
+                    <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </button>
+           </form>
+
+           <div className="mt-6 text-center text-sm text-slate-500">
+             {isLogin ? "Don't have an account? " : "Already have an account? "}
+             <button 
+               onClick={() => { setIsLogin(!isLogin); setError(''); }}
+               className="text-indigo-600 font-semibold hover:underline"
+             >
+               {isLogin ? "Sign Up" : "Log In"}
+             </button>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // --- Main App ---
 
 export default function App() {
   // -- State --
+  const [user, setUser] = useState<any>(null);
+  const [authChecking, setAuthChecking] = useState(true);
+
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   
   const [roles, setRoles] = useState<Role[]>(() => {
@@ -124,7 +278,6 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         // SMART MERGE: If local storage has empty Supabase keys, inject the defaults.
-        // This ensures the auto-config works even if the user visited the site before.
         const mergedSupabase = {
           url: parsed.supabase?.url || DEFAULT_SETTINGS.supabase.url,
           anonKey: parsed.supabase?.anonKey || DEFAULT_SETTINGS.supabase.anonKey
@@ -177,8 +330,22 @@ export default function App() {
   useEffect(() => { localStorage.setItem('prompts', JSON.stringify(prompts)); }, [prompts]);
   useEffect(() => { localStorage.setItem('appSettings', JSON.stringify(settings)); }, [settings]);
 
-  // Automatic Cloud Sync on Mount
+  // Check for active session on mount
   useEffect(() => {
+    const checkAuth = async () => {
+      const session = await getSession(settings);
+      if (session) {
+        setUser(session.user);
+      }
+      setAuthChecking(false);
+    };
+    checkAuth();
+  }, []);
+
+  // Automatic Cloud Sync when User is authenticated
+  useEffect(() => {
+    if (!user) return; // Don't sync if not logged in
+
     const initCloudData = async () => {
       // Ensure we have Supabase credentials
       if (!settings.supabase.url || !settings.supabase.anonKey) return;
@@ -186,12 +353,16 @@ export default function App() {
       setSyncStatus({ type: 'loading', msg: 'Syncing...' });
       try {
         const cloudData = await downloadBackupFromSupabase(settings);
-        if (cloudData) {
+        if (cloudData && (cloudData.roles.length > 0 || cloudData.scenarios.length > 0)) {
           // If we got data, update the local state to match the cloud source of truth
           setRoles(cloudData.roles);
           setScenarios(cloudData.scenarios);
           setPrompts(cloudData.prompts);
           setSyncStatus({ type: 'success', msg: 'Synced' });
+        } else {
+           // If cloud is empty, but we have local data, we should probably upload (handled by Save button or manual sync mostly)
+           // For now, if cloud is empty, just say Synced (empty state)
+           setSyncStatus({ type: 'idle', msg: '' });
         }
       } catch (e) {
         console.error("Auto-sync failed on mount:", e);
@@ -202,7 +373,7 @@ export default function App() {
     };
 
     initCloudData();
-  }, []); // Run once on mount
+  }, [user]); // Run when user logs in
 
   // -- Derived State --
   const activeRole = roles.find(r => r.id === selectedRoleId);
@@ -216,8 +387,16 @@ export default function App() {
 
   // -- Handlers --
 
+  const handleSignOut = async () => {
+    await signOutUser(settings);
+    setUser(null);
+    setRoles([]);
+    setScenarios([]);
+    setPrompts([]);
+  };
+
   const performAutoSync = async (action: () => Promise<any>) => {
-    if (!isCloudConfigured) return;
+    if (!isCloudConfigured || !user) return;
     
     setSyncStatus({ type: 'loading', msg: 'Syncing...' });
     try {
@@ -225,7 +404,7 @@ export default function App() {
       setSyncStatus({ type: 'success', msg: 'Saved' });
       setTimeout(() => setSyncStatus({ type: 'idle', msg: '' }), 2000);
     } catch (e: any) {
-      setSyncStatus({ type: 'error', msg: 'Sync Failed' });
+      setSyncStatus({ type: 'error', msg: e.message || 'Sync Failed' });
       console.error("Auto-sync error:", e);
       setTimeout(() => setSyncStatus({ type: 'idle', msg: '' }), 3000);
     }
@@ -334,41 +513,55 @@ export default function App() {
   const handleSavePrompt = () => {
     if (!selectedPromptId) return;
     
-    let updatedPrompt: Prompt | null = null;
+    // 1. Identify context
+    const currentRole = roles.find(r => r.id === selectedRoleId);
+    const currentScenario = scenarios.find(s => s.id === selectedScenarioId);
 
-    setPrompts(prev => prev.map(p => {
-      if (p.id === selectedPromptId) {
-        const historyItem: PromptHistoryItem = {
-          version: p.version,
-          content: p.content,
-          optimizedContent: p.optimizedContent,
-          timestamp: p.updatedAt
-        };
+    // 2. Identify the prompt to update
+    const promptIndex = prompts.findIndex(p => p.id === selectedPromptId);
+    if (promptIndex === -1) return;
+    const existingPrompt = prompts[promptIndex];
 
-        const newHistory = p.history ? [...p.history] : [];
-        if (p.content || p.optimizedContent) {
-           newHistory.push(historyItem);
-        }
+    // 3. Create the updated object *Synchronously*
+    const historyItem: PromptHistoryItem = {
+      version: existingPrompt.version,
+      content: existingPrompt.content,
+      optimizedContent: existingPrompt.optimizedContent,
+      timestamp: existingPrompt.updatedAt
+    };
 
-        updatedPrompt = {
-          ...p,
-          title: editorTitle,
-          content: editorContent,
-          optimizedContent: editorOptimized,
-          updatedAt: Date.now(),
-          version: p.version + 1,
-          history: newHistory
-        };
-        return updatedPrompt;
-      }
-      return p;
-    }));
-
-    // Auto-Sync outside reducer
-    if (updatedPrompt) {
-        const promptToSave = updatedPrompt as Prompt; // TS Guard
-        performAutoSync(() => upsertPrompt(promptToSave, settings));
+    const newHistory = existingPrompt.history ? [...existingPrompt.history] : [];
+    if (existingPrompt.content || existingPrompt.optimizedContent) {
+       newHistory.push(historyItem);
     }
+
+    const updatedPrompt: Prompt = {
+      ...existingPrompt,
+      title: editorTitle,
+      content: editorContent,
+      optimizedContent: editorOptimized,
+      updatedAt: Date.now(),
+      version: existingPrompt.version + 1,
+      history: newHistory
+    };
+
+    // 4. Update UI State
+    const newPromptsList = [...prompts];
+    newPromptsList[promptIndex] = updatedPrompt;
+    setPrompts(newPromptsList);
+
+    // 5. Trigger Cloud Sync with the *Correct Object*
+    performAutoSync(async () => {
+        // Cascade Save: Ensure parents exist in DB before saving child
+        if (currentRole) {
+            await upsertRole(currentRole, settings);
+        }
+        if (currentScenario) {
+            await upsertScenario(currentScenario, settings);
+        }
+        // Finally save the prompt
+        await upsertPrompt(updatedPrompt, settings);
+    });
   };
 
   const handleRestoreVersion = (historyItem: PromptHistoryItem) => {
@@ -415,17 +608,21 @@ export default function App() {
 
         if (hasCloudData) {
             // Cloud has data -> Restore it to local
-            // In a real app, we might ask to merge, but for "Sync" setup, fetching existing DB is safer
-            setRoles(cloudData.roles);
-            setScenarios(cloudData.scenarios);
-            setPrompts(cloudData.prompts);
-            setSyncStatus({ type: 'success', msg: 'Data Downloaded from Cloud' });
-        } else {
-            // Cloud is empty -> Upload all local data to initialize
-            const data: AppData = { roles, scenarios, prompts };
-            await uploadBackupToSupabase(data, settings);
-            setSyncStatus({ type: 'success', msg: 'Local Data Uploaded' });
-        }
+             // Optional: Ask user if they want to overwrite local
+             if(confirm("Cloud data found. Do you want to overwrite your local data with cloud data? Cancel to overwrite Cloud with Local data.")) {
+                 setRoles(cloudData.roles);
+                 setScenarios(cloudData.scenarios);
+                 setPrompts(cloudData.prompts);
+                 setSyncStatus({ type: 'success', msg: 'Data Downloaded from Cloud' });
+                 return;
+             }
+        } 
+        
+        // Cloud is empty OR user chose to overwrite cloud -> Upload all local data
+        const data: AppData = { roles, scenarios, prompts };
+        await uploadBackupToSupabase(data, settings);
+        setSyncStatus({ type: 'success', msg: 'Local Data Uploaded' });
+        
     } catch (e: any) {
         console.error(e);
         setSyncStatus({ type: 'error', msg: 'Connection Failed: ' + e.message });
@@ -457,6 +654,18 @@ export default function App() {
   };
 
   // -- Render Components --
+
+  if (authChecking) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-slate-100">
+         <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage settings={settings} onLoginSuccess={setUser} />;
+  }
 
   const SettingsView = () => (
     <div className="flex-1 flex flex-col bg-slate-50 h-full overflow-y-auto">
@@ -683,14 +892,28 @@ export default function App() {
           </button>
         </div>
 
-        <div className="p-3 border-t border-slate-100">
+        <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
            <div 
              onClick={() => setViewMode('settings')}
-             className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium ${viewMode === 'settings' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50'}`}
+             className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium ${viewMode === 'settings' ? 'bg-white shadow-sm border border-slate-200 text-slate-900' : 'text-slate-600 hover:bg-white hover:shadow-sm'}`}
            >
              <Settings className="w-5 h-5" />
              <span>Settings</span>
            </div>
+           
+           <div 
+             onClick={handleSignOut}
+             className="flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium text-slate-500 hover:bg-red-50 hover:text-red-600"
+           >
+             <LogOut className="w-5 h-5" />
+             <span>Sign Out</span>
+           </div>
+           
+           {user && (
+             <div className="px-3 pt-2 text-[10px] text-slate-400 text-center truncate">
+               Logged in as: {user.user_metadata?.username || user.email}
+             </div>
+           )}
         </div>
       </div>
 
