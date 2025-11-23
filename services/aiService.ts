@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Role, Scenario, AppSettings } from "../types";
 
@@ -8,8 +9,11 @@ export const optimizePromptWithAI = async (
   settings: AppSettings
 ): Promise<string> => {
   
+  const isChinese = settings.language === 'zh';
+
   const systemInstruction = `You are an expert Prompt Engineer specializing in LLM optimization. 
-  Your goal is to rewrite user drafts into high-performance, structured prompts using best practices (Chain of Thought, clear delimiters, persona adoption).`;
+  Your goal is to rewrite user drafts into high-performance, structured prompts using best practices (Chain of Thought, clear delimiters, persona adoption).
+  ${isChinese ? "IMPORTANT: The user prefers Chinese. Please ensure the optimized prompt and any analysis are in Simplified Chinese." : ""}`;
 
   const userContent = `
   I need you to optimize a prompt for an LLM.
@@ -26,6 +30,7 @@ export const optimizePromptWithAI = async (
   2. Rewrite the prompt to be more effective, precise, and robust.
   3. Maintain the original intent but improve clarity and structure.
   4. Return ONLY the optimized prompt text. Do not add conversational filler.
+  ${isChinese ? "5. Output the result in Simplified Chinese." : ""}
   `;
 
   if (settings.aiProvider === 'gemini') {
@@ -40,8 +45,11 @@ export const generateIdeasWithAI = async (
     settings: AppSettings
   ): Promise<Array<{title: string, goal: string}>> => {
     
+    const isChinese = settings.language === 'zh';
+    
     const prompt = `Based on the persona "${role.name}" (${role.description}), suggest 3 distinct, useful scenarios where an AI could assist. 
-    Return the result as a JSON array of objects with 'title' and 'goal' keys. Do not include markdown formatting like \`\`\`json.`;
+    Return the result as a JSON array of objects with 'title' and 'goal' keys. Do not include markdown formatting like \`\`\`json.
+    ${isChinese ? "Please provide the 'title' and 'goal' values in Simplified Chinese." : ""}`;
   
     try {
       let text = "";

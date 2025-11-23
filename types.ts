@@ -1,3 +1,4 @@
+
 export interface Role {
   id: string;
   name: string;
@@ -40,6 +41,8 @@ export type ViewMode = 'dashboard' | 'library' | 'settings';
 export type AIProvider = 'gemini' | 'siliconflow';
 
 export interface AppSettings {
+  language: 'en' | 'zh';
+  theme: 'light' | 'dark'; // Added theme support
   aiProvider: AIProvider;
   gemini: {
     apiKey: string;
