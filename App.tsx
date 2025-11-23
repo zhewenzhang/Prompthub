@@ -93,8 +93,9 @@ const DEFAULT_SETTINGS: AppSettings = {
     baseUrl: 'https://api.siliconflow.cn/v1'
   },
   supabase: {
-    url: '',
-    anonKey: ''
+    // PRE-CONFIGURED CREDENTIALS
+    url: 'https://uwvlduprxppwdkjkvwby.supabase.co',
+    anonKey: 'sb_publishable_NCyVuDM0d_Nkn50QvKdY-Q_OCQJsN5L'
   }
 };
 
@@ -119,7 +120,25 @@ export default function App() {
   
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem('appSettings');
-    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // SMART MERGE: If local storage has empty Supabase keys, inject the defaults.
+        // This ensures the auto-config works even if the user visited the site before.
+        const mergedSupabase = {
+          url: parsed.supabase?.url || DEFAULT_SETTINGS.supabase.url,
+          anonKey: parsed.supabase?.anonKey || DEFAULT_SETTINGS.supabase.anonKey
+        };
+        return { 
+          ...DEFAULT_SETTINGS, 
+          ...parsed,
+          supabase: mergedSupabase
+        };
+      } catch (e) {
+        return DEFAULT_SETTINGS;
+      }
+    }
+    return DEFAULT_SETTINGS;
   });
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
@@ -157,6 +176,33 @@ export default function App() {
   useEffect(() => { localStorage.setItem('scenarios', JSON.stringify(scenarios)); }, [scenarios]);
   useEffect(() => { localStorage.setItem('prompts', JSON.stringify(prompts)); }, [prompts]);
   useEffect(() => { localStorage.setItem('appSettings', JSON.stringify(settings)); }, [settings]);
+
+  // Automatic Cloud Sync on Mount
+  useEffect(() => {
+    const initCloudData = async () => {
+      // Ensure we have Supabase credentials
+      if (!settings.supabase.url || !settings.supabase.anonKey) return;
+
+      setSyncStatus({ type: 'loading', msg: 'Syncing...' });
+      try {
+        const cloudData = await downloadBackupFromSupabase(settings);
+        if (cloudData) {
+          // If we got data, update the local state to match the cloud source of truth
+          setRoles(cloudData.roles);
+          setScenarios(cloudData.scenarios);
+          setPrompts(cloudData.prompts);
+          setSyncStatus({ type: 'success', msg: 'Synced' });
+        }
+      } catch (e) {
+        console.error("Auto-sync failed on mount:", e);
+        setSyncStatus({ type: 'error', msg: 'Sync Failed' });
+      } finally {
+        setTimeout(() => setSyncStatus({ type: 'idle', msg: '' }), 2000);
+      }
+    };
+
+    initCloudData();
+  }, []); // Run once on mount
 
   // -- Derived State --
   const activeRole = roles.find(r => r.id === selectedRoleId);
@@ -352,7 +398,7 @@ export default function App() {
 
   const handleSaveAndSyncSupabase = async () => {
     if (!settings.supabase.url || !settings.supabase.anonKey) {
-        setSyncStatus({ type: 'error', msg: 'Please enter URL and Key' });
+        setSyncStatus({ type: 'error', msg: 'Configuration Error' });
         return;
     }
     
@@ -521,38 +567,19 @@ export default function App() {
              <Database className="w-5 h-5 mr-2 text-indigo-500" /> Data Management (Supabase)
            </h3>
            
-           <div className="space-y-4 mb-6">
-             <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Project URL</label>
-                  <input 
-                    type="text"
-                    className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                    placeholder="https://xyz.supabase.co"
-                    value={settings.supabase.url}
-                    onChange={(e) => setSettings({...settings, supabase: {...settings.supabase, url: e.target.value}})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Anon Key</label>
-                  <input 
-                    type="password"
-                    className="w-full border border-slate-300 bg-white text-slate-900 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                    placeholder="eyJhbG..."
-                    value={settings.supabase.anonKey}
-                    onChange={(e) => setSettings({...settings, supabase: {...settings.supabase, anonKey: e.target.value}})}
-                  />
-                </div>
-             </div>
-             <div className="text-xs text-amber-600 bg-amber-50 p-3 rounded border border-amber-200">
-               <strong>Requirement:</strong> Your Supabase project must have tables: <code>roles</code>, <code>scenarios</code>, and <code>prompts</code>.
-             </div>
+           <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-100 flex items-center">
+              <div className="p-2 bg-white rounded-full text-green-600 shadow-sm mr-4">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-800 text-sm">Cloud Service Active</h4>
+                <p className="text-xs text-slate-500">Your application is automatically connected to the remote database.</p>
+              </div>
            </div>
 
            <div className="flex items-center space-x-4 border-t border-slate-100 pt-4">
               <button 
                 onClick={handleSaveAndSyncSupabase}
-                disabled={!settings.supabase.url || !settings.supabase.anonKey}
                 className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-sm"
               >
                 <CloudUpload className="w-4 h-4 mr-2" />
@@ -561,7 +588,6 @@ export default function App() {
               
               <button 
                 onClick={() => handleCloudSync('download')}
-                disabled={!settings.supabase.url || !settings.supabase.anonKey}
                 className="flex items-center px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
                 <CloudDownload className="w-4 h-4 mr-2" />
