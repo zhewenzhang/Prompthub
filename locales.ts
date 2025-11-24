@@ -6,6 +6,7 @@ export const translations = {
     subTitle: "Role-Based Prompt Manager",
     dashboard: "Dashboard",
     settings: "Settings",
+    articles: "Knowledge Base",
     signOut: "Sign Out",
     roles: "Roles",
     createRole: "Create New Role",
@@ -38,6 +39,17 @@ export const translations = {
       roles: "Roles",
       scenarios: "Scenarios",
       prompts: "Prompts"
+    },
+    articlesPage: {
+      title: "Articles",
+      newArticle: "New Article",
+      noArticles: "No articles found.",
+      selectArticle: "Select an article to edit",
+      titlePlace: "Article Title...",
+      contentPlace: "Write your article in Markdown...",
+      edit: "Edit",
+      preview: "Preview",
+      deleteAlert: "Delete this article?"
     },
     editor: {
       modeFree: "Freeform Mode",
@@ -152,6 +164,7 @@ export const translations = {
     subTitle: "角色化提示词管理工具",
     dashboard: "仪表盘",
     settings: "设置",
+    articles: "知识库 / 文章",
     signOut: "退出登录",
     roles: "角色列表",
     createRole: "创建新角色",
@@ -184,6 +197,17 @@ export const translations = {
       roles: "角色",
       scenarios: "场景",
       prompts: "提示词"
+    },
+    articlesPage: {
+      title: "文章列表",
+      newArticle: "写文章",
+      noArticles: "暂无文章。",
+      selectArticle: "请选择一篇文章进行编辑",
+      titlePlace: "输入文章标题...",
+      contentPlace: "在此使用 Markdown 格式撰写文章...",
+      edit: "编辑",
+      preview: "预览",
+      deleteAlert: "确定删除这篇文章吗？"
     },
     editor: {
       modeFree: "自由输入模式",

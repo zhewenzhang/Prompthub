@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { AppData, AppSettings, Role, Scenario, Prompt } from '../types';
+import { AppData, AppSettings, Role, Scenario, Prompt, Article } from '../types';
 
 export const getSupabaseClient = (settings: AppSettings) => {
   if (!settings.supabase.url || !settings.supabase.anonKey) {
@@ -92,6 +92,14 @@ const mapPromptToDb = (p: Prompt) => ({
   history: p.history || []
 });
 
+const mapArticleToDb = (a: Article) => ({
+  id: a.id,
+  title: a.title,
+  content: a.content,
+  created_at: a.createdAt,
+  updated_at: a.updatedAt
+});
+
 const mapRoleFromDb = (r: any): Role => ({
   id: r.id,
   name: r.name,
@@ -120,6 +128,14 @@ const mapPromptFromDb = (p: any): Prompt => ({
   createdAt: p.created_at,
   updatedAt: p.updated_at,
   history: p.history || []
+});
+
+const mapArticleFromDb = (a: any): Article => ({
+  id: a.id,
+  title: a.title,
+  content: a.content,
+  createdAt: a.created_at,
+  updatedAt: a.updated_at
 });
 
 // --- Real-time Granular Sync Functions ---
@@ -204,6 +220,32 @@ export const deletePrompt = async (id: string, settings: AppSettings) => {
   if (error) throw new Error(error.message);
 };
 
+export const upsertArticle = async (article: Article, settings: AppSettings) => {
+  const supabase = getSupabaseClient(settings);
+  if (!supabase) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+
+  const payload = {
+    ...mapArticleToDb(article),
+    user_id: user.id
+  };
+
+  const { error } = await supabase.from('articles').upsert(payload, { onConflict: 'id' });
+  if (error) {
+      console.error("Upsert Article Error:", error);
+      throw new Error(`Article Save Failed: ${error.message}`);
+  }
+};
+
+export const deleteArticle = async (id: string, settings: AppSettings) => {
+  const supabase = getSupabaseClient(settings);
+  if (!supabase) return;
+  const { error } = await supabase.from('articles').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+};
+
 // --- Bulk Sync Functions (Backup/Restore) ---
 
 export const uploadBackupToSupabase = async (data: AppData, settings: AppSettings): Promise<boolean> => {
@@ -252,6 +294,19 @@ export const uploadBackupToSupabase = async (data: AppData, settings: AppSetting
       if (pError) throw new Error(`Prompts Sync Error: ${pError.message}`);
     }
 
+    // 4. Upsert Articles
+    if (data.articles.length > 0) {
+      const articlesPayload = data.articles.map(a => ({
+        ...mapArticleToDb(a),
+        user_id: user.id
+      }));
+
+      const { error: aError } = await supabase
+        .from('articles')
+        .upsert(articlesPayload, { onConflict: 'id' });
+      if (aError) throw new Error(`Articles Sync Error: ${aError.message}`);
+    }
+
     return true;
 };
 
@@ -260,19 +315,26 @@ export const downloadBackupFromSupabase = async (settings: AppSettings): Promise
     if (!supabase) throw new Error("Supabase not configured");
 
     // RLS will ensure we only select rows where user_id = auth.uid()
-    const [rolesRes, scenariosRes, promptsRes] = await Promise.all([
+    const [rolesRes, scenariosRes, promptsRes, articlesRes] = await Promise.all([
       supabase.from('roles').select('*'),
       supabase.from('scenarios').select('*'),
-      supabase.from('prompts').select('*')
+      supabase.from('prompts').select('*'),
+      supabase.from('articles').select('*')
     ]);
 
     if (rolesRes.error) throw new Error(rolesRes.error.message);
     if (scenariosRes.error) throw new Error(scenariosRes.error.message);
     if (promptsRes.error) throw new Error(promptsRes.error.message);
+    // articlesRes might fail if table doesn't exist yet, handle gracefully if needed, 
+    // but better to assume schema exists
+    if (articlesRes.error) {
+       console.warn("Could not fetch articles, maybe table missing?", articlesRes.error);
+    }
 
     return {
       roles: (rolesRes.data || []).map(mapRoleFromDb),
       scenarios: (scenariosRes.data || []).map(mapScenarioFromDb),
-      prompts: (promptsRes.data || []).map(mapPromptFromDb)
+      prompts: (promptsRes.data || []).map(mapPromptFromDb),
+      articles: (articlesRes.data || []).map(mapArticleFromDb)
     };
 };

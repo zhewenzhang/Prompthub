@@ -36,7 +36,15 @@ export interface Prompt {
   history?: PromptHistoryItem[];
 }
 
-export type ViewMode = 'dashboard' | 'library' | 'settings';
+export interface Article {
+  id: string;
+  title: string;
+  content: string; // Markdown content
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type ViewMode = 'dashboard' | 'library' | 'settings' | 'articles';
 
 export type AIProvider = 'gemini' | 'siliconflow';
 
@@ -63,4 +71,5 @@ export interface AppData {
   roles: Role[];
   scenarios: Scenario[];
   prompts: Prompt[];
+  articles: Article[];
 }
