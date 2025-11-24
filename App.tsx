@@ -1,6 +1,4 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -38,7 +36,12 @@ import {
   Moon,
   Languages,
   PenTool,
-  LayoutTemplate
+  LayoutTemplate,
+  Zap,
+  ArrowLeft,
+  ThumbsUp,
+  ThumbsDown,
+  FileText
 } from 'lucide-react';
 import { Role, Scenario, Prompt, PromptHistoryItem, AppSettings, AppData, ViewMode } from './types';
 import { optimizePromptWithAI, generateIdeasWithAI } from './services/aiService';
@@ -55,6 +58,15 @@ import {
   getSession
 } from './services/supabaseService';
 import { translations } from './locales';
+
+// --- Constants ---
+
+const AVAILABLE_SKILLS = [
+  { id: 'deepThinking', labelKey: 'skillDeepThinking', instruction: "Please engage in deep, critical analysis before responding. Consider underlying assumptions and potential implications." },
+  { id: 'cot', labelKey: 'skillCoT', instruction: "Let's think step by step. Break down the problem into smaller components." },
+  { id: 'reflection', labelKey: 'skillReflection', instruction: "After generating the initial response, review it for accuracy and logical consistency. Correct any errors found." },
+  { id: 'creative', labelKey: 'skillCreative', instruction: "Use divergent thinking. Provide multiple unique perspectives or creative solutions." }
+];
 
 // --- Helper Components ---
 
@@ -97,6 +109,184 @@ const SyncIndicator = ({ status }: { status: { type: string, msg: string } }) =>
       {status.type === 'success' && <CheckCircle2 className="w-3 h-3" />}
       {status.type === 'error' && <AlertCircle className="w-3 h-3" />}
       <span>{status.msg}</span>
+    </div>
+  );
+};
+
+// --- CoStar Guide Component ---
+const CoStarGuide = ({ onBack }: { onBack: () => void }) => {
+  return (
+    <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors">
+      <div className="max-w-4xl mx-auto p-6 md:p-12">
+        <button 
+          onClick={onBack}
+          className="flex items-center text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Dashboard
+        </button>
+
+        <article className="prose dark:prose-invert max-w-none">
+          <div className="mb-10 pb-8 border-b border-slate-200 dark:border-slate-700">
+            <h1 className="text-4xl font-extrabold text-slate-900 dark:text-slate-50 mb-4 tracking-tight">
+              CO-STAR 提示詞框架：解鎖 AI 潛能的黃金法則
+            </h1>
+            <p className="text-xl text-slate-500 dark:text-slate-400 font-light leading-relaxed">
+              一份為您準備的結構化提示詞指南，助您從零開始掌握引導 AI 生成高品質內容的藝術。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+             <div className="col-span-2">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">什麼是 CO-STAR？</h2>
+                <p className="text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+                  CO-STAR 是一個首字母縮寫詞，代表了構成完美指令的六個關鍵要素。它是由新加坡政府科技局（GovTech）推廣的一套方法，被公認為目前最結構化、最有效的提示詞撰寫標準之一。
+                </p>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                   <ul className="space-y-2 text-indigo-900 dark:text-indigo-200 font-medium">
+                      <li className="flex items-center"><span className="w-8 font-bold">C</span> Context (背景資訊)</li>
+                      <li className="flex items-center"><span className="w-8 font-bold">O</span> Objective (任務目標)</li>
+                      <li className="flex items-center"><span className="w-8 font-bold">S</span> Style (撰寫風格)</li>
+                      <li className="flex items-center"><span className="w-8 font-bold">T</span> Tone (語氣/態度)</li>
+                      <li className="flex items-center"><span className="w-8 font-bold">A</span> Audience (目標受眾)</li>
+                      <li className="flex items-center"><span className="w-8 font-bold">R</span> Response (輸出格式)</li>
+                   </ul>
+                </div>
+             </div>
+             <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white flex flex-col justify-center shadow-lg">
+                <Sparkles className="w-12 h-12 mb-4 opacity-80" />
+                <h3 className="text-xl font-bold mb-2">為什麼有效？</h3>
+                <p className="opacity-90 text-sm leading-relaxed">
+                   只要在寫指令時涵蓋這六點，就能讓 AI 瞬間從「泛泛而談的機器人」變成「懂你的專業助理」。
+                </p>
+             </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">📚 深度解析：六大要素</h2>
+          <div className="overflow-x-auto mb-12 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th className="p-4 font-bold">要素</th>
+                  <th className="p-4 font-bold">核心問題</th>
+                  <th className="p-4 font-bold hidden md:table-cell">為什麼重要？</th>
+                  <th className="p-4 font-bold">範例 (以寫郵件為例)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                <tr className="bg-white dark:bg-slate-900">
+                  <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">Context</td>
+                  <td className="p-4">背景是什麼？</td>
+                  <td className="p-4 text-slate-500 hidden md:table-cell">AI 缺乏背景知識。情境可限制範圍，減少幻覺。</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">「我是一家軟體公司的產品經理，新功能上線延遲了。」</td>
+                </tr>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">Objective</td>
+                  <td className="p-4">你要做什麼？</td>
+                  <td className="p-4 text-slate-500 hidden md:table-cell">指令的核心。告訴 AI 具體要完成什麼任務。</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">「請幫我寫一封解釋延遲原因並安撫客戶的郵件。」</td>
+                </tr>
+                <tr className="bg-white dark:bg-slate-900">
+                  <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">Style</td>
+                  <td className="p-4">模仿誰的風格？</td>
+                  <td className="p-4 text-slate-500 hidden md:table-cell">指定寫作風格（如：簡潔有力、商業大師）。</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">「使用 Steve Jobs 的風格，簡潔、自信且具說服力。」</td>
+                </tr>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">Tone</td>
+                  <td className="p-4">語氣如何？</td>
+                  <td className="p-4 text-slate-500 hidden md:table-cell">設定情感色彩，決定讀者的感受。</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">「語氣誠懇、帶有歉意，但展現對品質的堅持。」</td>
+                </tr>
+                <tr className="bg-white dark:bg-slate-900">
+                  <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">Audience</td>
+                  <td className="p-4">寫給誰看？</td>
+                  <td className="p-4 text-slate-500 hidden md:table-cell">根據讀者調整用詞難度。</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">「目標受眾是長期支持我們的 VIP 企業客戶。」</td>
+                </tr>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <td className="p-4 font-bold text-indigo-600 dark:text-indigo-400">Response</td>
+                  <td className="p-4">格式長怎樣？</td>
+                  <td className="p-4 text-slate-500 hidden md:table-cell">規定輸出的形式（表格、代碼、清單）。</td>
+                  <td className="p-4 text-slate-600 dark:text-slate-300">「以 Markdown 格式輸出，不要有其他廢話。」</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">🆚 實戰對比</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 p-6 rounded-xl">
+               <div className="flex items-center space-x-2 text-red-600 dark:text-red-400 font-bold mb-4">
+                  <ThumbsDown className="w-5 h-5" />
+                  <span>普通指令 (The Average Prompt)</span>
+               </div>
+               <div className="p-4 bg-white dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 mb-4 shadow-sm text-sm">
+                 「幫我寫一個 Facebook 貼文，宣傳我們的有機咖啡豆。」
+               </div>
+               <p className="text-xs text-red-600/80 dark:text-red-400/80">
+                 <strong className="block mb-1">AI 的反應：</strong> 
+                 AI 會給出一個非常通用的貼文，可能充滿了陳腔濫調，且不一定符合你的品牌調性。
+               </p>
+            </div>
+
+            <div className="border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/10 p-6 rounded-xl">
+               <div className="flex items-center space-x-2 text-green-600 dark:text-green-400 font-bold mb-4">
+                  <ThumbsUp className="w-5 h-5" />
+                  <span>CO-STAR 指令 (The CO-STAR Prompt)</span>
+               </div>
+               <div className="p-4 bg-white dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300 mb-4 shadow-sm text-xs leading-relaxed">
+                 <span className="font-bold text-indigo-600">C:</span> 公平貿易精品咖啡店，剛進口稀有衣索比亞豆。<br/>
+                 <span className="font-bold text-indigo-600">O:</span> FB貼文，吸引顧客試飲並預購。<br/>
+                 <span className="font-bold text-indigo-600">S:</span> 生活風格部落客，注重感官描述。<br/>
+                 <span className="font-bold text-indigo-600">T:</span> 熱情、溫暖、文藝。<br/>
+                 <span className="font-bold text-indigo-600">A:</span> 25-40歲都會上班族。<br/>
+                 <span className="font-bold text-indigo-600">R:</span> 短文，含Emoji，加3個Hashtag。
+               </div>
+               <p className="text-xs text-green-600/80 dark:text-green-400/80">
+                 <strong className="block mb-1">AI 的反應：</strong> 
+                 AI 會寫出一段描述咖啡香氣、強調公平貿易故事的感性文案，精準擊中目標客群的痛點。
+               </p>
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">🛠️ 立即上手：CO-STAR 萬用模板</h2>
+          <div className="bg-slate-900 text-slate-200 p-6 rounded-xl font-mono text-sm shadow-2xl relative mb-12">
+             <div className="absolute top-4 right-4 text-slate-500 text-xs">Markdown</div>
+             <pre className="whitespace-pre-wrap">
+{`# CO-STAR Prompt 模板
+
+1. **Context (背景)**: [在此輸入你的身份、現狀或背景資訊...]
+2. **Objective (目標)**: [在此輸入你希望 AI 完成的具體任務...]
+3. **Style (風格)**: [在此輸入寫作風格，例如：像某位名人、專業學術、口語化...]
+4. **Tone (語氣)**: [在此輸入情感態度，例如：幽默、嚴肅、激勵人心...]
+5. **Audience (受眾)**: [在此輸入這份內容是給誰看的...]
+6. **Response (格式)**: [在此輸入你想要的輸出格式，例如：表格、條列式...]
+
+---
+請根據以上指示執行任務。`}
+             </pre>
+             <button 
+                onClick={() => navigator.clipboard.writeText(`# CO-STAR Prompt 模板...`)}
+                className="mt-4 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs flex items-center inline-flex transition-colors"
+             >
+                <Copy className="w-3 h-3 mr-1.5" /> 複製模板
+             </button>
+          </div>
+
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-6 rounded-r-xl">
+             <h3 className="font-bold text-amber-800 dark:text-amber-200 mb-2 flex items-center">
+               <Lightbulb className="w-5 h-5 mr-2" /> 給用戶的小撇步
+             </h3>
+             <ul className="list-disc list-inside space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                <li><strong>風格 (Style) vs. 語氣 (Tone)：</strong> 風格是「寫作習慣」（長短句、用詞），語氣是「背後情緒」（憤怒、開心）。</li>
+                <li><strong>R (格式) 很關鍵：</strong> 工作使用時務必明確指定（如 Excel, JSON），節省排版時間。</li>
+                <li><strong>迭代優化：</strong> 結果不完美通常是 Context 不夠多。回頭微調 Context 和 Style 再次發送。</li>
+             </ul>
+          </div>
+
+        </article>
+      </div>
     </div>
   );
 };
@@ -265,7 +455,7 @@ const AuthPage = ({ settings, onLoginSuccess }: { settings: AppSettings, onLogin
 };
 
 // --- Dashboard Home Component ---
-const DashboardHome = ({ settings, user }: { settings: AppSettings, user: any }) => {
+const DashboardHome = ({ settings, user, onOpenGuide }: { settings: AppSettings, user: any, onOpenGuide: (guide: string) => void }) => {
     const t = translations[settings.language] || translations.zh;
     const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
     
@@ -318,13 +508,23 @@ const DashboardHome = ({ settings, user }: { settings: AppSettings, user: any })
                         </div>
                         
                          <div className="grid gap-4">
-                            {t.dashboardHome.frameworks.map((fw: any, index: number) => (
-                                <div key={index} className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                            {t.dashboardHome.frameworks.map((fw: any, index: number) => {
+                                const isCostar = fw.name.includes('CO-STAR');
+                                return (
+                                <div 
+                                    key={index} 
+                                    onClick={isCostar ? () => onOpenGuide('costar') : undefined}
+                                    className={`bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all relative overflow-hidden group ${isCostar ? 'cursor-pointer hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600' : ''}`}
+                                >
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-indigo-50 dark:from-indigo-900/20 to-transparent rounded-bl-full -mr-4 -mt-4"></div>
-                                    <h3 className="font-bold text-indigo-700 dark:text-indigo-400 mb-2 relative z-10">{fw.name}</h3>
+                                    <h3 className="font-bold text-indigo-700 dark:text-indigo-400 mb-2 relative z-10 flex items-center">
+                                        {fw.name}
+                                        {isCostar && <ArrowRight className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                    </h3>
                                     <p className="text-sm text-slate-600 dark:text-slate-400 relative z-10">{fw.desc}</p>
                                 </div>
-                            ))}
+                                );
+                            })}
                             
                             <div className="bg-indigo-600 dark:bg-indigo-700 text-white p-6 rounded-xl shadow-lg mt-4 flex items-center justify-between">
                                 <div>
@@ -353,6 +553,7 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true);
 
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const [activeGuide, setActiveGuide] = useState<string | null>(null);
   
   const [roles, setRoles] = useState<Role[]>(() => {
     const saved = localStorage.getItem('roles');
@@ -398,6 +599,9 @@ export default function App() {
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Prompt Editor State
   const [editorTitle, setEditorTitle] = useState('');
   const [editorContent, setEditorContent] = useState('');
@@ -412,7 +616,8 @@ export default function App() {
     task: '',
     constraints: '',
     format: '',
-    tone: ''
+    tone: '',
+    skills: [] as string[]
   });
 
   // Modals
@@ -502,6 +707,18 @@ export default function App() {
   const filteredPrompts = prompts.filter(p => p.scenarioId === selectedScenarioId);
   
   const isCloudConfigured = !!(settings.supabase.url && settings.supabase.anonKey);
+
+  // -- Search Logic --
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return { roles: [], scenarios: [], prompts: [] };
+    const lowerQuery = searchQuery.toLowerCase();
+
+    return {
+      roles: roles.filter(r => r.name.toLowerCase().includes(lowerQuery) || r.description.toLowerCase().includes(lowerQuery)),
+      scenarios: scenarios.filter(s => s.title.toLowerCase().includes(lowerQuery) || s.goal.toLowerCase().includes(lowerQuery)),
+      prompts: prompts.filter(p => p.title.toLowerCase().includes(lowerQuery) || p.content.toLowerCase().includes(lowerQuery) || (p.tags && p.tags.some(tag => tag.toLowerCase().includes(lowerQuery))))
+    };
+  }, [searchQuery, roles, scenarios, prompts]);
 
   // -- Handlers --
 
@@ -621,7 +838,7 @@ export default function App() {
     setIsHistoryOpen(false);
     // Reset Guided Mode
     setIsGuidedMode(false);
-    setGuidedInputs({role: '', context: '', task: '', constraints: '', format: '', tone: ''});
+    setGuidedInputs({role: '', context: '', task: '', constraints: '', format: '', tone: '', skills: []});
   };
 
   const handleSelectPrompt = (p: Prompt) => {
@@ -633,7 +850,7 @@ export default function App() {
     setIsHistoryOpen(false);
     // Reset Guided Mode (Assume prompt is freeform unless we saved structure, which we don't yet)
     setIsGuidedMode(false);
-    setGuidedInputs({role: '', context: '', task: '', constraints: '', format: '', tone: ''});
+    setGuidedInputs({role: '', context: '', task: '', constraints: '', format: '', tone: '', skills: []});
   };
 
   const generatePromptFromStructure = (inputs: typeof guidedInputs) => {
@@ -643,15 +860,35 @@ export default function App() {
       if (inputs.task) prompt += `# Task\n${inputs.task}\n\n`;
       if (inputs.constraints) prompt += `# Constraints\n${inputs.constraints}\n\n`;
       if (inputs.format) prompt += `# Format\n${inputs.format}\n\n`;
-      if (inputs.tone) prompt += `# Tone\n${inputs.tone}`;
+      if (inputs.tone) prompt += `# Tone\n${inputs.tone}\n\n`;
+      
+      if (inputs.skills && inputs.skills.length > 0) {
+        prompt += `# Capabilities\n`;
+        inputs.skills.forEach(skillId => {
+          const skill = AVAILABLE_SKILLS.find(s => s.id === skillId);
+          if (skill) {
+            prompt += `- ${skill.instruction}\n`;
+          }
+        });
+      }
+
       return prompt.trim();
   };
 
-  const handleGuidedChange = (key: keyof typeof guidedInputs, value: string) => {
+  const handleGuidedChange = (key: keyof typeof guidedInputs, value: any) => {
       const newInputs = { ...guidedInputs, [key]: value };
       setGuidedInputs(newInputs);
       const newContent = generatePromptFromStructure(newInputs);
       setEditorContent(newContent);
+  };
+
+  const toggleGuidedSkill = (skillId: string) => {
+    const currentSkills = guidedInputs.skills || [];
+    const newSkills = currentSkills.includes(skillId) 
+      ? currentSkills.filter(id => id !== skillId)
+      : [...currentSkills, skillId];
+    
+    handleGuidedChange('skills', newSkills);
   };
 
   const handleSavePrompt = () => {
@@ -780,6 +1017,30 @@ export default function App() {
        setSyncStatus({ type: 'error', msg: e.message });
      }
      setTimeout(() => setSyncStatus({ type: 'idle', msg: '' }), 3000);
+  };
+
+  const handleSearchResultClick = (type: 'role' | 'scenario' | 'prompt', item: any) => {
+      if (type === 'role') {
+          setSelectedRoleId(item.id);
+          setSelectedScenarioId(null);
+          setSelectedPromptId(null);
+          setIsEditingPrompt(false);
+      } else if (type === 'scenario') {
+          setSelectedRoleId(item.roleId);
+          setSelectedScenarioId(item.id);
+          setSelectedPromptId(null);
+          setIsEditingPrompt(false);
+      } else if (type === 'prompt') {
+          const s = scenarios.find(s => s.id === item.scenarioId);
+          if (s) {
+              setSelectedRoleId(s.roleId);
+              setSelectedScenarioId(item.scenarioId);
+              handleSelectPrompt(item); 
+          }
+      }
+      setViewMode('dashboard');
+      setSearchQuery('');
+      setActiveGuide(null);
   };
 
   // -- Render Components --
@@ -951,12 +1212,91 @@ export default function App() {
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.subTitle}</p>
         </div>
         
+        {/* Search Input Area */}
+        <div className="px-4 pt-4 pb-2">
+            <div className="relative z-20">
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                <input 
+                    type="text"
+                    placeholder={t.search.placeholder}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                
+                {/* Search Results Dropdown */}
+                {searchQuery.trim() && (
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-h-80 overflow-y-auto overflow-x-hidden">
+                        {(searchResults.roles.length === 0 && searchResults.scenarios.length === 0 && searchResults.prompts.length === 0) ? (
+                            <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">{t.search.noResults}</div>
+                        ) : (
+                            <div className="py-2">
+                                {/* Roles */}
+                                {searchResults.roles.length > 0 && (
+                                    <div>
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.search.roles}</div>
+                                        {searchResults.roles.map(r => (
+                                            <div 
+                                                key={r.id} 
+                                                onClick={() => handleSearchResultClick('role', r)}
+                                                className="px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer flex items-center space-x-2"
+                                            >
+                                                <span className="text-base">{r.icon}</span>
+                                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{r.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Scenarios */}
+                                {searchResults.scenarios.length > 0 && (
+                                    <div>
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2">{t.search.scenarios}</div>
+                                        {searchResults.scenarios.map(s => (
+                                            <div 
+                                                key={s.id} 
+                                                onClick={() => handleSearchResultClick('scenario', s)}
+                                                className="px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer"
+                                            >
+                                                <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{s.title}</div>
+                                                <div className="text-xs text-slate-500 truncate">{s.goal}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Prompts */}
+                                {searchResults.prompts.length > 0 && (
+                                    <div>
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-2">{t.search.prompts}</div>
+                                        {searchResults.prompts.map(p => (
+                                            <div 
+                                                key={p.id} 
+                                                onClick={() => handleSearchResultClick('prompt', p)}
+                                                className="px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer"
+                                            >
+                                                <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{p.title}</div>
+                                                <div className="text-xs text-slate-500 truncate font-mono opacity-70">
+                                                    {(p.optimizedContent || p.content).substring(0, 40)}...
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
            <div 
              onClick={() => {
                 setViewMode('dashboard');
                 setSelectedRoleId(null); // Reset to Home
                 setSelectedScenarioId(null);
+                setActiveGuide(null);
              }}
              className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium ${viewMode === 'dashboard' && !selectedRoleId ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-900 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
            >
@@ -977,6 +1317,7 @@ export default function App() {
                 setSelectedScenarioId(null); 
                 setSelectedPromptId(null); 
                 setIsEditingPrompt(false); 
+                setActiveGuide(null);
               }}
               className={`group flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
                 viewMode === 'dashboard' && selectedRoleId === role.id 
@@ -1057,11 +1398,13 @@ export default function App() {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      {viewMode === 'settings' ? (
+      {activeGuide === 'costar' ? (
+        <CoStarGuide onBack={() => setActiveGuide(null)} />
+      ) : viewMode === 'settings' ? (
         <SettingsView />
       ) : !selectedRoleId ? (
         // DASHBOARD HOME VIEW (When no role selected)
-        <DashboardHome settings={settings} user={user} />
+        <DashboardHome settings={settings} user={user} onOpenGuide={setActiveGuide} />
       ) : (
         // WORKSPACE VIEW (When role selected)
         <>
@@ -1347,6 +1690,36 @@ export default function App() {
                                         </div>
                                     </div>
                                     
+                                    {/* Capabilities Section */}
+                                    <div className="pt-2">
+                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center">
+                                          <Zap className="w-3 h-3 mr-1 text-amber-500" />
+                                          {t.editor.skillsLabel}
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                          {AVAILABLE_SKILLS.map(skill => {
+                                            const isSelected = guidedInputs.skills?.includes(skill.id);
+                                            const label = (t.editor as any)[skill.labelKey] || skill.id;
+                                            return (
+                                              <div 
+                                                key={skill.id}
+                                                onClick={() => toggleGuidedSkill(skill.id)}
+                                                className={`cursor-pointer p-3 rounded-lg border text-sm transition-all flex items-center space-x-2 ${
+                                                  isSelected 
+                                                  ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-200' 
+                                                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500'
+                                                }`}
+                                              >
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-amber-500 border-amber-500' : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-500'}`}>
+                                                  {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                                                </div>
+                                                <span className="font-medium">{label}</span>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                    </div>
+
                                     {/* Preview of Generated Content */}
                                     <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                                         <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Live Preview (Generated)</label>

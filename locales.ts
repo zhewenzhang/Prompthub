@@ -31,6 +31,14 @@ export const translations = {
     save: "Save",
     copy: "Copy",
     copied: "Copied!",
+    search: {
+      placeholder: "Search prompts, roles...",
+      results: "Search Results",
+      noResults: "No results found.",
+      roles: "Roles",
+      scenarios: "Scenarios",
+      prompts: "Prompts"
+    },
     editor: {
       modeFree: "Freeform Mode",
       modeGuided: "Guided Mode",
@@ -46,6 +54,11 @@ export const translations = {
       formatPlace: "Markdown, JSON, Table, List...",
       tone: "Tone",
       tonePlace: "Professional, Friendly, Academic...",
+      skillsLabel: "Skills & Capabilities",
+      skillDeepThinking: "Deep Thinking",
+      skillCoT: "Chain of Thought",
+      skillReflection: "Self-Reflection",
+      skillCreative: "Creative Expansion",
       guideNote: "Filling these fields will automatically generate the prompt structure below."
     },
     dashboardHome: {
@@ -164,6 +177,14 @@ export const translations = {
     save: "保存",
     copy: "复制",
     copied: "已复制！",
+    search: {
+      placeholder: "搜索提示词、角色...",
+      results: "搜索结果",
+      noResults: "未找到相关结果。",
+      roles: "角色",
+      scenarios: "场景",
+      prompts: "提示词"
+    },
     editor: {
       modeFree: "自由输入模式",
       modeGuided: "结构化引导模式",
@@ -179,6 +200,11 @@ export const translations = {
       formatPlace: "Markdown, 表格, JSON, 列表...",
       tone: "语气 (Tone)",
       tonePlace: "专业、幽默、学术...",
+      skillsLabel: "增强能力 (Capabilities)",
+      skillDeepThinking: "深度思考 (Deep Thinking)",
+      skillCoT: "思维链 (Chain of Thought)",
+      skillReflection: "自我反思 (Self-Reflection)",
+      skillCreative: "发散思维 (Creative)",
       guideNote: "填写上方字段将自动生成下方的提示词结构。"
     },
     dashboardHome: {
