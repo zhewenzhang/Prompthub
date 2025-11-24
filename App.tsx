@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -35,7 +36,9 @@ import {
   GraduationCap,
   Sun,
   Moon,
-  Languages
+  Languages,
+  PenTool,
+  LayoutTemplate
 } from 'lucide-react';
 import { Role, Scenario, Prompt, PromptHistoryItem, AppSettings, AppData, ViewMode } from './types';
 import { optimizePromptWithAI, generateIdeasWithAI } from './services/aiService';
@@ -395,6 +398,23 @@ export default function App() {
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
 
+  // Prompt Editor State
+  const [editorTitle, setEditorTitle] = useState('');
+  const [editorContent, setEditorContent] = useState('');
+  const [editorOptimized, setEditorOptimized] = useState('');
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  
+  // Guided Mode State
+  const [isGuidedMode, setIsGuidedMode] = useState(false);
+  const [guidedInputs, setGuidedInputs] = useState({
+    role: '',
+    context: '',
+    task: '',
+    constraints: '',
+    format: '',
+    tone: ''
+  });
+
   // Modals
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState(false);
@@ -410,12 +430,6 @@ export default function App() {
   const [newScenarioTitle, setNewScenarioTitle] = useState('');
   const [newScenarioGoal, setNewScenarioGoal] = useState('');
   const [suggestingScenarios, setSuggestingScenarios] = useState(false);
-
-  // Prompt Editor State
-  const [editorTitle, setEditorTitle] = useState('');
-  const [editorContent, setEditorContent] = useState('');
-  const [editorOptimized, setEditorOptimized] = useState('');
-  const [isOptimizing, setIsOptimizing] = useState(false);
 
   // Cloud Sync Status
   const [syncStatus, setSyncStatus] = useState<{type: 'idle' | 'success' | 'error' | 'loading', msg: string}>({ type: 'idle', msg: '' });
@@ -605,6 +619,9 @@ export default function App() {
     setEditorOptimized('');
     setIsEditingPrompt(true);
     setIsHistoryOpen(false);
+    // Reset Guided Mode
+    setIsGuidedMode(false);
+    setGuidedInputs({role: '', context: '', task: '', constraints: '', format: '', tone: ''});
   };
 
   const handleSelectPrompt = (p: Prompt) => {
@@ -614,6 +631,27 @@ export default function App() {
     setEditorOptimized(p.optimizedContent || '');
     setIsEditingPrompt(true);
     setIsHistoryOpen(false);
+    // Reset Guided Mode (Assume prompt is freeform unless we saved structure, which we don't yet)
+    setIsGuidedMode(false);
+    setGuidedInputs({role: '', context: '', task: '', constraints: '', format: '', tone: ''});
+  };
+
+  const generatePromptFromStructure = (inputs: typeof guidedInputs) => {
+      let prompt = "";
+      if (inputs.role) prompt += `# Role\n${inputs.role}\n\n`;
+      if (inputs.context) prompt += `# Context\n${inputs.context}\n\n`;
+      if (inputs.task) prompt += `# Task\n${inputs.task}\n\n`;
+      if (inputs.constraints) prompt += `# Constraints\n${inputs.constraints}\n\n`;
+      if (inputs.format) prompt += `# Format\n${inputs.format}\n\n`;
+      if (inputs.tone) prompt += `# Tone\n${inputs.tone}`;
+      return prompt.trim();
+  };
+
+  const handleGuidedChange = (key: keyof typeof guidedInputs, value: string) => {
+      const newInputs = { ...guidedInputs, [key]: value };
+      setGuidedInputs(newInputs);
+      const newContent = generatePromptFromStructure(newInputs);
+      setEditorContent(newContent);
   };
 
   const handleSavePrompt = () => {
@@ -1136,8 +1174,8 @@ export default function App() {
                               </div>
                               <div className="flex justify-between items-center">
                                 <div className="flex space-x-2">
-                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${prompt.optimizedContent ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
-                                    {prompt.optimizedContent ? t.optimized : t.draft}
+                                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${prompt.optimizedContent ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
+                                    {prompt.optimizedContent ? t.optimized : t.manual}
                                     </span>
                                     <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600">
                                     v{prompt.version}
@@ -1216,17 +1254,116 @@ export default function App() {
                   {/* Main Editors */}
                   <div className="flex-1 flex h-full">
                     {/* Left: Draft */}
-                    <div className={`flex-1 p-6 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 ${editorOptimized ? 'w-1/2' : 'w-full'}`}>
-                        <div className="flex justify-between mb-2 items-center">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.originalDraft}</label>
-                        <button onClick={() => copyToClipboard(editorContent)} className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"><Copy className="w-3 h-3" /></button>
+                    <div className={`flex-1 p-0 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 ${editorOptimized ? 'w-1/2' : 'w-full'}`}>
+                        {/* Mode Toggle Bar */}
+                        <div className="flex items-center border-b border-slate-200 dark:border-slate-700 px-6 py-2 bg-slate-50/50 dark:bg-slate-800/50">
+                            <button
+                                onClick={() => setIsGuidedMode(false)}
+                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all mr-2 ${!isGuidedMode ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                            >
+                                <PenTool className="w-3.5 h-3.5" />
+                                <span>{t.editor.modeFree}</span>
+                            </button>
+                            <button
+                                onClick={() => setIsGuidedMode(true)}
+                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isGuidedMode ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                            >
+                                <LayoutTemplate className="w-3.5 h-3.5" />
+                                <span>{t.editor.modeGuided}</span>
+                            </button>
+                            <div className="flex-1"></div>
+                            <button onClick={() => copyToClipboard(editorContent)} className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center text-xs">
+                                <Copy className="w-3 h-3 mr-1" /> {t.copy}
+                            </button>
                         </div>
-                        <textarea 
-                        value={editorContent}
-                        onChange={(e) => setEditorContent(e.target.value)}
-                        className="flex-1 w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-lg p-4 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none font-mono text-sm leading-relaxed placeholder:text-slate-400"
-                        placeholder="..."
-                        />
+
+                        <div className="flex-1 relative overflow-y-auto">
+                            {isGuidedMode ? (
+                                <div className="p-6 space-y-4">
+                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-lg flex items-start">
+                                        <Sparkles className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+                                        {t.editor.guideNote}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t.editor.role}</label>
+                                            <input 
+                                                className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-slate-100"
+                                                placeholder={t.editor.rolePlace}
+                                                value={guidedInputs.role}
+                                                onChange={(e) => handleGuidedChange('role', e.target.value)}
+                                            />
+                                        </div>
+                                         <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t.editor.tone}</label>
+                                            <input 
+                                                className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-slate-100"
+                                                placeholder={t.editor.tonePlace}
+                                                value={guidedInputs.tone}
+                                                onChange={(e) => handleGuidedChange('tone', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t.editor.context}</label>
+                                        <textarea 
+                                            className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-none dark:text-slate-100"
+                                            placeholder={t.editor.contextPlace}
+                                            value={guidedInputs.context}
+                                            onChange={(e) => handleGuidedChange('context', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t.editor.task}</label>
+                                        <textarea 
+                                            className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none h-24 resize-none dark:text-slate-100"
+                                            placeholder={t.editor.taskPlace}
+                                            value={guidedInputs.task}
+                                            onChange={(e) => handleGuidedChange('task', e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t.editor.constraints}</label>
+                                            <textarea 
+                                                className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-none dark:text-slate-100"
+                                                placeholder={t.editor.constraintsPlace}
+                                                value={guidedInputs.constraints}
+                                                onChange={(e) => handleGuidedChange('constraints', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{t.editor.format}</label>
+                                            <textarea 
+                                                className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none h-20 resize-none dark:text-slate-100"
+                                                placeholder={t.editor.formatPlace}
+                                                value={guidedInputs.format}
+                                                onChange={(e) => handleGuidedChange('format', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Preview of Generated Content */}
+                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Live Preview (Generated)</label>
+                                        <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400 whitespace-pre-wrap border border-slate-100 dark:border-slate-700">
+                                            {editorContent || <span className="italic opacity-50">Start typing above...</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <textarea 
+                                    value={editorContent}
+                                    onChange={(e) => setEditorContent(e.target.value)}
+                                    className="w-full h-full bg-slate-50 dark:bg-slate-900 border-none text-slate-900 dark:text-slate-100 p-6 resize-none focus:ring-0 outline-none font-mono text-sm leading-relaxed placeholder:text-slate-400"
+                                    placeholder="..."
+                                />
+                            )}
+                        </div>
                     </div>
 
                     {/* Right: Optimized (Conditional) */}

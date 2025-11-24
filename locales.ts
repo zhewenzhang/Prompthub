@@ -1,4 +1,5 @@
 
+
 export const translations = {
   en: {
     appName: "PromptArch",
@@ -18,6 +19,7 @@ export const translations = {
     noPrompts: "No prompts created yet.",
     newPrompt: "New Prompt",
     draft: "Draft",
+    manual: "Manual",
     optimized: "Optimized",
     originalDraft: "Original Draft",
     aiOptimized: "AI Optimized",
@@ -29,6 +31,23 @@ export const translations = {
     save: "Save",
     copy: "Copy",
     copied: "Copied!",
+    editor: {
+      modeFree: "Freeform Mode",
+      modeGuided: "Guided Mode",
+      role: "Role / Persona",
+      rolePlace: "Who is the AI? (e.g., Senior Data Analyst)",
+      context: "Context",
+      contextPlace: "What is the background situation?",
+      task: "Task",
+      taskPlace: "What exactly needs to be done?",
+      constraints: "Constraints",
+      constraintsPlace: "Word count, things to avoid, etc.",
+      format: "Output Format",
+      formatPlace: "Markdown, JSON, Table, List...",
+      tone: "Tone",
+      tonePlace: "Professional, Friendly, Academic...",
+      guideNote: "Filling these fields will automatically generate the prompt structure below."
+    },
     dashboardHome: {
         welcome: "Hello",
         subtitle: "Your personal hub for mastering prompt engineering and managing AI contexts.",
@@ -133,6 +152,7 @@ export const translations = {
     noPrompts: "暂无提示词。",
     newPrompt: "新建提示词",
     draft: "草稿",
+    manual: "手写版",
     optimized: "已优化",
     originalDraft: "原始草稿",
     aiOptimized: "AI 优化建议",
@@ -144,6 +164,23 @@ export const translations = {
     save: "保存",
     copy: "复制",
     copied: "已复制！",
+    editor: {
+      modeFree: "自由输入模式",
+      modeGuided: "结构化引导模式",
+      role: "角色 (Role)",
+      rolePlace: "AI 是谁？(例如：资深数据分析师)",
+      context: "背景 (Context)",
+      contextPlace: "任务的背景情况是什么？",
+      task: "任务 (Task)",
+      taskPlace: "具体需要做什么？",
+      constraints: "约束 (Constraints)",
+      constraintsPlace: "字数限制、避免提及的内容等",
+      format: "输出格式 (Format)",
+      formatPlace: "Markdown, 表格, JSON, 列表...",
+      tone: "语气 (Tone)",
+      tonePlace: "专业、幽默、学术...",
+      guideNote: "填写上方字段将自动生成下方的提示词结构。"
+    },
     dashboardHome: {
         welcome: "你好",
         subtitle: "您的个人提示词工程中心，助您掌握 AI 交互艺术。",
