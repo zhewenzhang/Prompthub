@@ -44,7 +44,8 @@ import {
   ThumbsDown,
   FileText,
   Eye,
-  Edit3
+  Edit3,
+  Menu // Added Menu icon
 } from 'lucide-react';
 import { Role, Scenario, Prompt, PromptHistoryItem, AppSettings, AppData, ViewMode, Article } from './types';
 import { optimizePromptWithAI, generateIdeasWithAI } from './services/aiService';
@@ -78,8 +79,8 @@ const AVAILABLE_SKILLS = [
 const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children?: React.ReactNode }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 m-4 animate-in fade-in zoom-in duration-200 border border-slate-200 dark:border-slate-700">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200 border border-slate-200 dark:border-slate-700">
         <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-700 pb-3">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
@@ -109,7 +110,7 @@ const SyncIndicator = ({ status }: { status: { type: string, msg: string } }) =>
     status.type === 'error' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
 
   return (
-    <div className={`fixed top-4 right-4 z-50 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm border border-white/50 dark:border-slate-700/50 flex items-center space-x-2 transition-all duration-300 animate-in slide-in-from-top-2 ${bgColor}`}>
+    <div className={`fixed top-4 right-4 z-[60] px-3 py-1.5 rounded-full text-xs font-medium shadow-sm border border-white/50 dark:border-slate-700/50 flex items-center space-x-2 transition-all duration-300 animate-in slide-in-from-top-2 ${bgColor}`}>
       {status.type === 'loading' && <Loader2 className="w-3 h-3 animate-spin" />}
       {status.type === 'success' && <CheckCircle2 className="w-3 h-3" />}
       {status.type === 'error' && <AlertCircle className="w-3 h-3" />}
@@ -121,7 +122,7 @@ const SyncIndicator = ({ status }: { status: { type: string, msg: string } }) =>
 // --- CoStar Guide Component ---
 const CoStarGuide = ({ onBack }: { onBack: () => void }) => {
   return (
-    <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors">
+    <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 transition-colors h-full w-full absolute inset-0 z-40">
       <div className="max-w-4xl mx-auto p-6 md:p-12">
         <button 
           onClick={onBack}
@@ -131,17 +132,16 @@ const CoStarGuide = ({ onBack }: { onBack: () => void }) => {
           Back to Dashboard
         </button>
 
-        <article className="prose dark:prose-invert max-w-none">
+        <article className="prose dark:prose-invert max-w-none pb-20">
           <div className="mb-10 pb-8 border-b border-slate-200 dark:border-slate-700">
-            <h1 className="text-4xl font-extrabold text-slate-900 dark:text-slate-50 mb-4 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-50 mb-4 tracking-tight">
               CO-STAR 提示詞框架：解鎖 AI 潛能的黃金法則
             </h1>
-            <p className="text-xl text-slate-500 dark:text-slate-400 font-light leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 font-light leading-relaxed">
               一份為您準備的結構化提示詞指南，助您從零開始掌握引導 AI 生成高品質內容的藝術。
             </p>
           </div>
           
-          {/* Content from previous step embedded here for brevity, keeping full structure */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
              <div className="col-span-2">
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">什麼是 CO-STAR？</h2>
@@ -159,8 +159,8 @@ const CoStarGuide = ({ onBack }: { onBack: () => void }) => {
                    </ul>
                 </div>
              </div>
-             {/* ... remaining CoStar content ... */}
           </div>
+          {/* Detailed table and comparison could be added here similar to previous request */}
         </article>
       </div>
     </div>
@@ -336,11 +336,10 @@ const DashboardHome = ({ settings, user, onOpenGuide }: { settings: AppSettings,
     const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User';
     
     return (
-        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 p-6 md:p-10 transition-colors">
-            {/* ... rest of dashboard home ... */}
-             <div className="max-w-6xl mx-auto space-y-10">
+        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 p-4 md:p-10 transition-colors">
+             <div className="max-w-6xl mx-auto space-y-10 pb-20">
                 {/* Header */}
-                <div className="space-y-2 mb-8">
+                <div className="space-y-2 mb-8 mt-4 md:mt-0">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
                       {t.dashboardHome.welcome} {username}
                     </h1>
@@ -499,6 +498,9 @@ export default function App() {
     skills: [] as string[]
   });
 
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Modals
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isScenarioModalOpen, setIsScenarioModalOpen] = useState(false);
@@ -656,6 +658,7 @@ export default function App() {
     setNewRoleName(''); setNewRoleDesc(''); setIsRoleModalOpen(false);
     setSelectedRoleId(role.id);
     setSelectedScenarioId(null);
+    setIsMobileMenuOpen(false); // Close menu on mobile
   };
 
   // ... (Other handlers like handleDeleteRole, handleAddScenario remain the same) ...
@@ -830,6 +833,7 @@ export default function App() {
     setArticleContent("");
     setArticlePreviewMode(false);
     performAutoSync(() => upsertArticle(newArticle, settings));
+    setIsMobileMenuOpen(false);
   };
 
   const handleSelectArticle = (a: Article) => {
@@ -976,6 +980,7 @@ export default function App() {
       setViewMode('dashboard');
       setSearchQuery('');
       setActiveGuide(null);
+      setIsMobileMenuOpen(false); // Close menu on mobile
   };
 
   // --- Render Components ---
@@ -994,8 +999,8 @@ export default function App() {
 
   const SettingsView = () => (
       // ... same settings view ...
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 h-full overflow-y-auto transition-colors">
-      <div className="p-6 max-w-3xl mx-auto w-full">
+    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 h-full overflow-y-auto transition-colors pt-4 md:pt-0">
+      <div className="p-6 max-w-3xl mx-auto w-full pb-20 md:pb-6">
         {/* ... (keep existing settings content) ... */}
         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6 flex items-center">
           <Settings className="w-6 h-6 mr-2 text-indigo-600 dark:text-indigo-400" /> {t.settingsPage.title}
@@ -1009,7 +1014,7 @@ export default function App() {
            </h3>
            <div className="mb-6">
              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.settingsPage.provider}</label>
-             <div className="flex space-x-4">
+             <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
                <label className={`flex-1 border rounded-lg p-4 cursor-pointer transition-all ${settings.aiProvider === 'gemini' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
                  <input type="radio" name="provider" value="gemini" checked={settings.aiProvider === 'gemini'} onChange={() => setSettings({...settings, aiProvider: 'gemini'})} className="hidden" />
                  <div className="font-semibold text-slate-800 dark:text-slate-200">Google Gemini</div>
@@ -1057,9 +1062,9 @@ export default function App() {
               <div className="p-2 bg-white dark:bg-slate-800 rounded-full text-green-600 dark:text-green-400 shadow-sm mr-4"><CheckCircle2 className="w-6 h-6" /></div>
               <div><h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{t.settingsPage.cloudActive}</h4><p className="text-xs text-slate-500 dark:text-slate-400">{t.settingsPage.cloudDesc}</p></div>
            </div>
-           <div className="flex items-center space-x-4 border-t border-slate-100 dark:border-slate-700 pt-4">
-              <button onClick={handleSaveAndSyncSupabase} className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-sm"><CloudUpload className="w-4 h-4 mr-2" />{t.settingsPage.saveSync}</button>
-              <button onClick={() => handleCloudSync('download')} className="flex items-center px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"><CloudDownload className="w-4 h-4 mr-2" />{t.settingsPage.restoreCloud}</button>
+           <div className="flex flex-col md:flex-row items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-4 border-t border-slate-100 dark:border-slate-700 pt-4">
+              <button onClick={handleSaveAndSyncSupabase} className="flex justify-center items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-sm"><CloudUpload className="w-4 h-4 mr-2" />{t.settingsPage.saveSync}</button>
+              <button onClick={() => handleCloudSync('download')} className="flex justify-center items-center px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"><CloudDownload className="w-4 h-4 mr-2" />{t.settingsPage.restoreCloud}</button>
            </div>
         </div>
       </div>
@@ -1067,18 +1072,41 @@ export default function App() {
   );
 
   return (
-    <div className="flex h-screen bg-slate-100 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="flex flex-col md:flex-row h-screen bg-slate-100 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors overflow-hidden">
       
       {/* Global Sync Status Indicator */}
       <SyncIndicator status={syncStatus} />
 
-      {/* COLUMN 1: SIDEBAR */}
-      <div className="w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col z-10 shadow-sm flex-shrink-0 transition-colors">
+      {/* MOBILE HEADER */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-30 flex-shrink-0">
+         <div className="flex items-center space-x-3">
+             <button onClick={() => setIsMobileMenuOpen(true)} className="p-1 -ml-1 text-slate-600 dark:text-slate-300">
+                 <Menu className="w-6 h-6" />
+             </button>
+             <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400">
+                <Database className="w-5 h-5" />
+                <h1 className="font-bold text-lg tracking-tight">{t.appName}</h1>
+             </div>
+         </div>
+      </div>
+
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {isMobileMenuOpen && (
+          <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
+
+      {/* COLUMN 1: SIDEBAR (Responsive) */}
+      <div className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col z-50 shadow-xl md:shadow-none transform transition-transform duration-300 md:relative md:translate-x-0 flex-shrink-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* ... Sidebar Header & Search ... */}
         <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80">
-          <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-1">
-            <Database className="w-5 h-5" />
-            <h1 className="font-bold text-lg tracking-tight">{t.appName}</h1>
+          <div className="flex items-center justify-between space-x-2 text-indigo-600 dark:text-indigo-400 mb-1">
+             <div className="flex items-center space-x-2">
+                <Database className="w-5 h-5" />
+                <h1 className="font-bold text-lg tracking-tight">{t.appName}</h1>
+             </div>
+             <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400">
+                 <X className="w-5 h-5" />
+             </button>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">{t.subTitle}</p>
         </div>
@@ -1147,6 +1175,7 @@ export default function App() {
                 setSelectedRoleId(null); // Reset to Home
                 setSelectedScenarioId(null);
                 setActiveGuide(null);
+                setIsMobileMenuOpen(false);
              }}
              className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium ${viewMode === 'dashboard' && !selectedRoleId ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-900 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
            >
@@ -1168,6 +1197,7 @@ export default function App() {
                 setSelectedPromptId(null); 
                 setIsEditingPrompt(false); 
                 setActiveGuide(null);
+                setIsMobileMenuOpen(false);
               }}
               className={`group flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
                 viewMode === 'dashboard' && selectedRoleId === role.id 
@@ -1211,7 +1241,7 @@ export default function App() {
            
            {/* Articles Link */}
            <div 
-             onClick={() => setViewMode('articles')}
+             onClick={() => {setViewMode('articles'); setIsMobileMenuOpen(false); }}
              className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium ${viewMode === 'articles' ? 'bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm'}`}
            >
              <BookOpen className="w-5 h-5" />
@@ -1219,7 +1249,7 @@ export default function App() {
            </div>
 
            <div 
-             onClick={() => setViewMode('settings')}
+             onClick={() => {setViewMode('settings'); setIsMobileMenuOpen(false); }}
              className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all font-medium ${viewMode === 'settings' ? 'bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm'}`}
            >
              <Settings className="w-5 h-5" />
@@ -1233,6 +1263,7 @@ export default function App() {
       </div>
 
       {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden bg-white dark:bg-slate-900 transition-colors relative">
       {activeGuide === 'costar' ? (
         <CoStarGuide onBack={() => setActiveGuide(null)} />
       ) : viewMode === 'settings' ? (
@@ -1241,7 +1272,7 @@ export default function App() {
         /* ARTICLES VIEW */
         <>
             {/* COLUMN 2: ARTICLE LIST */}
-            <div className="w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 transition-all duration-300">
+            <div className={`w-full md:w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 transition-all duration-300 ${selectedArticleId ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center h-[73px] bg-slate-50/50 dark:bg-slate-800/30">
                     <div>
                         <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t.articlesPage.title}</h2>
@@ -1292,7 +1323,7 @@ export default function App() {
             </div>
 
             {/* COLUMN 3: ARTICLE EDITOR/VIEWER */}
-            <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 relative min-w-0 transition-colors">
+            <div className={`flex-1 flex flex-col bg-white dark:bg-slate-800 relative min-w-0 transition-colors ${!selectedArticleId ? 'hidden md:flex' : 'flex'}`}>
                 {!selectedArticleId ? (
                      <div className="flex items-center justify-center h-full text-slate-400">
                         <div className="text-center">
@@ -1304,34 +1335,39 @@ export default function App() {
                     <div className="flex flex-col h-full">
                         {/* Toolbar */}
                         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center h-[73px]">
-                             <input 
-                                type="text" 
-                                value={articleTitle} 
-                                onChange={(e) => setArticleTitle(e.target.value)}
-                                className="text-xl font-bold text-slate-800 dark:text-slate-100 bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 rounded px-2 py-1 w-full max-w-lg"
-                                placeholder={t.articlesPage.titlePlace}
-                            />
-                            <div className="flex items-center space-x-3">
+                             <div className="flex items-center flex-1 mr-4">
+                                <button onClick={() => setSelectedArticleId(null)} className="md:hidden mr-3 text-slate-500">
+                                   <ArrowLeft className="w-5 h-5" />
+                                </button>
+                                <input 
+                                    type="text" 
+                                    value={articleTitle} 
+                                    onChange={(e) => setArticleTitle(e.target.value)}
+                                    className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 rounded px-2 py-1 w-full"
+                                    placeholder={t.articlesPage.titlePlace}
+                                />
+                             </div>
+                            <div className="flex items-center space-x-2 md:space-x-3">
                                 <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
                                     <button 
                                         onClick={() => setArticlePreviewMode(false)}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center ${!articlePreviewMode ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
-                                        <Edit3 className="w-3 h-3 mr-1.5"/> {t.articlesPage.edit}
+                                        <Edit3 className="w-3 h-3 md:mr-1.5"/><span className="hidden md:inline">{t.articlesPage.edit}</span>
                                     </button>
                                     <button 
                                         onClick={() => setArticlePreviewMode(true)}
                                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center ${articlePreviewMode ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
                                     >
-                                        <Eye className="w-3 h-3 mr-1.5"/> {t.articlesPage.preview}
+                                        <Eye className="w-3 h-3 md:mr-1.5"/><span className="hidden md:inline">{t.articlesPage.preview}</span>
                                     </button>
                                 </div>
                                 <button 
                                     onClick={handleSaveArticle}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-all shadow-sm"
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-all shadow-sm"
                                 >
-                                    <Save className="w-4 h-4 mr-2" />
-                                    {t.save}
+                                    <Save className="w-4 h-4 md:mr-2" />
+                                    <span className="hidden md:inline">{t.save}</span>
                                 </button>
                             </div>
                         </div>
@@ -1339,7 +1375,7 @@ export default function App() {
                         {/* Editor Content */}
                         <div className="flex-1 overflow-hidden relative">
                             {articlePreviewMode ? (
-                                <div className="h-full overflow-y-auto p-8 md:p-12">
+                                <div className="h-full overflow-y-auto p-4 md:p-12 pb-20">
                                      <article className="prose dark:prose-invert max-w-3xl mx-auto">
                                         <h1 className="mb-8">{articleTitle}</h1>
                                         <ReactMarkdown>{articleContent}</ReactMarkdown>
@@ -1349,7 +1385,7 @@ export default function App() {
                                 <textarea 
                                     value={articleContent}
                                     onChange={(e) => setArticleContent(e.target.value)}
-                                    className="w-full h-full bg-slate-50 dark:bg-slate-900 border-none text-slate-900 dark:text-slate-100 p-8 resize-none focus:ring-0 outline-none font-mono text-base leading-relaxed placeholder:text-slate-400"
+                                    className="w-full h-full bg-slate-50 dark:bg-slate-900 border-none text-slate-900 dark:text-slate-100 p-4 md:p-8 resize-none focus:ring-0 outline-none font-mono text-base leading-relaxed placeholder:text-slate-400"
                                     placeholder={t.articlesPage.contentPlace}
                                 />
                             )}
@@ -1366,11 +1402,16 @@ export default function App() {
         <>
             {/* ... Existing Scenarios & Prompt Columns ... */}
           {/* COLUMN 2: SCENARIOS */}
-          <div className={`w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 transition-all duration-300 ${!selectedRoleId ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+          <div className={`w-full md:w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 transition-all duration-300 ${!selectedRoleId ? 'opacity-50 pointer-events-none' : 'opacity-100'} ${selectedScenarioId ? 'hidden md:flex' : 'flex'}`}>
             <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center h-[73px] bg-slate-50/50 dark:bg-slate-800/30">
-              <div>
-                 <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t.scenarios}</h2>
-                 <p className="text-xs text-slate-500">{t.contextsFor} {activeRole?.name}</p>
+              <div className="flex items-center">
+                 <button onClick={() => setSelectedRoleId(null)} className="md:hidden mr-3 text-slate-500">
+                    <ArrowLeft className="w-5 h-5" />
+                 </button>
+                 <div>
+                    <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t.scenarios}</h2>
+                    <p className="text-xs text-slate-500">{t.contextsFor} {activeRole?.name}</p>
+                 </div>
               </div>
               <button 
                 onClick={() => setIsScenarioModalOpen(true)} 
@@ -1421,7 +1462,7 @@ export default function App() {
           </div>
 
           {/* COLUMN 3: PROMPTS */}
-          <div className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 h-full overflow-hidden relative min-w-0 transition-colors">
+          <div className={`flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 h-full overflow-hidden relative min-w-0 transition-colors ${!selectedScenarioId ? 'hidden md:flex' : 'flex'}`}>
             {!selectedScenarioId ? (
                  <div className="flex items-center justify-center h-full text-slate-400">
                    <div className="text-center">
@@ -1433,11 +1474,14 @@ export default function App() {
               /* PROMPT LIST VIEW */
               <div className="flex flex-col h-full">
                  <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center h-[73px]">
-                   <div>
+                   <div className="flex items-center">
+                      <button onClick={() => setSelectedScenarioId(null)} className="md:hidden mr-3 text-slate-500">
+                         <ArrowLeft className="w-5 h-5" />
+                      </button>
                       <h2 className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                        <span>{t.prompts}</span>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                        <span className="text-indigo-600 dark:text-indigo-400 font-normal">{activeScenario?.title}</span>
+                        <span className="hidden md:inline">{t.prompts}</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400 hidden md:inline" />
+                        <span className="text-indigo-600 dark:text-indigo-400 font-normal truncate max-w-[150px] md:max-w-none">{activeScenario?.title}</span>
                       </h2>
                    </div>
                    <button 
@@ -1449,7 +1493,7 @@ export default function App() {
                    </button>
                  </div>
                  
-                 <div className="flex-1 overflow-y-auto p-6">
+                 <div className="flex-1 overflow-y-auto p-4 md:p-6">
                     {filteredPrompts.length === 0 ? (
                        <EmptyState icon={MessageSquare} message={t.noPrompts} />
                     ) : (
@@ -1493,22 +1537,23 @@ export default function App() {
               </div>
             ) : (
               /* PROMPT EDITOR VIEW */
-              <div className="flex flex-col h-full bg-white dark:bg-slate-800 relative">
+              <div className="flex flex-col h-full bg-white dark:bg-slate-800 relative z-10 w-full">
                 {/* Toolbar */}
-                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center h-[73px]">
-                  <div className="flex items-center space-x-4 flex-1">
+                <div className="px-4 md:px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center h-[73px]">
+                  <div className="flex items-center space-x-2 md:space-x-4 flex-1 mr-2">
                      <button onClick={() => setIsEditingPrompt(false)} className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
-                        <ChevronRight className="w-5 h-5 rotate-180" />
+                        <ArrowLeft className="w-5 h-5 md:hidden" />
+                        <ChevronRight className="w-5 h-5 rotate-180 hidden md:block" />
                      </button>
                      <input 
                        type="text" 
                        value={editorTitle} 
                        onChange={(e) => setEditorTitle(e.target.value)}
-                       className="text-xl font-bold text-slate-800 dark:text-slate-100 bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 rounded px-2 py-1 w-full max-w-md"
+                       className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100 bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 rounded px-2 py-1 w-full max-w-md"
                        placeholder={t.modals.scenarioTitle}
                      />
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 md:space-x-3">
                      <button 
                        onClick={() => setIsHistoryOpen(!isHistoryOpen)}
                        className={`p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800 transition-all relative ${isHistoryOpen ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : ''}`}
@@ -1519,11 +1564,11 @@ export default function App() {
                             <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full"></span>
                         )}
                      </button>
-                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block"></div>
                      <button 
                        onClick={handleOptimize} 
                        disabled={isOptimizing || !editorContent}
-                       className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-all ${
+                       className={`px-3 md:px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-all ${
                          isOptimizing 
                          ? 'bg-indigo-100 text-indigo-400 cursor-wait dark:bg-indigo-900/50 dark:text-indigo-300' 
                          : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800 dark:hover:bg-indigo-900/40'
@@ -1533,53 +1578,53 @@ export default function App() {
                          <span className="animate-pulse">{t.optimizing}</span>
                        ) : (
                          <>
-                           <Wand2 className="w-4 h-4 mr-2" />
-                           {t.optimize}
+                           <Wand2 className="w-4 h-4 md:mr-2" />
+                           <span className="hidden md:inline">{t.optimize}</span>
                          </>
                        )}
                      </button>
                      <button 
                        onClick={handleSavePrompt}
-                       className="bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-all shadow-sm active:scale-95"
+                       className="bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white px-3 md:px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-all shadow-sm active:scale-95"
                      >
-                       <Save className="w-4 h-4 mr-2" />
-                       {t.save} v{activePrompt ? activePrompt.version + 1 : 1}
+                       <Save className="w-4 h-4 md:mr-2" />
+                       <span className="hidden md:inline">{t.save} v{activePrompt ? activePrompt.version + 1 : 1}</span>
                      </button>
                   </div>
                 </div>
 
                 {/* Editor Content */}
-                <div className="flex-1 flex overflow-hidden relative">
+                <div className="flex-1 flex overflow-hidden relative flex-col md:flex-row">
                   
                   {/* Main Editors */}
-                  <div className="flex-1 flex h-full">
+                  <div className="flex-1 flex flex-col md:flex-row h-full">
                     {/* Left: Draft */}
-                    <div className={`flex-1 p-0 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 ${editorOptimized ? 'w-1/2' : 'w-full'}`}>
+                    <div className={`flex-1 p-0 md:border-r border-slate-200 dark:border-slate-700 flex flex-col transition-all duration-300 ${editorOptimized ? 'h-1/2 md:h-full md:w-1/2' : 'h-full w-full'}`}>
                         {/* Mode Toggle Bar */}
-                        <div className="flex items-center border-b border-slate-200 dark:border-slate-700 px-6 py-2 bg-slate-50/50 dark:bg-slate-800/50">
+                        <div className="flex items-center border-b border-slate-200 dark:border-slate-700 px-4 md:px-6 py-2 bg-slate-50/50 dark:bg-slate-800/50 overflow-x-auto">
                             <button
                                 onClick={() => setIsGuidedMode(false)}
-                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all mr-2 ${!isGuidedMode ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all mr-2 whitespace-nowrap ${!isGuidedMode ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
                             >
                                 <PenTool className="w-3.5 h-3.5" />
                                 <span>{t.editor.modeFree}</span>
                             </button>
                             <button
                                 onClick={() => setIsGuidedMode(true)}
-                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isGuidedMode ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                                className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${isGuidedMode ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
                             >
                                 <LayoutTemplate className="w-3.5 h-3.5" />
                                 <span>{t.editor.modeGuided}</span>
                             </button>
                             <div className="flex-1"></div>
-                            <button onClick={() => copyToClipboard(editorContent)} className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center text-xs">
-                                <Copy className="w-3 h-3 mr-1" /> {t.copy}
+                            <button onClick={() => copyToClipboard(editorContent)} className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center text-xs ml-2">
+                                <Copy className="w-3 h-3 md:mr-1" /> <span className="hidden md:inline">{t.copy}</span>
                             </button>
                         </div>
 
                         <div className="flex-1 relative overflow-y-auto">
                             {isGuidedMode ? (
-                                <div className="p-6 space-y-4">
+                                <div className="p-4 md:p-6 space-y-4 pb-20">
                                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-lg flex items-start">
                                         <Sparkles className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                                         {t.editor.guideNote}
@@ -1689,7 +1734,7 @@ export default function App() {
                                 <textarea 
                                     value={editorContent}
                                     onChange={(e) => setEditorContent(e.target.value)}
-                                    className="w-full h-full bg-slate-50 dark:bg-slate-900 border-none text-slate-900 dark:text-slate-100 p-6 resize-none focus:ring-0 outline-none font-mono text-sm leading-relaxed placeholder:text-slate-400"
+                                    className="w-full h-full bg-slate-50 dark:bg-slate-900 border-none text-slate-900 dark:text-slate-100 p-4 md:p-6 resize-none focus:ring-0 outline-none font-mono text-sm leading-relaxed placeholder:text-slate-400"
                                     placeholder="..."
                                 />
                             )}
@@ -1698,7 +1743,7 @@ export default function App() {
 
                     {/* Right: Optimized (Conditional) */}
                     {editorOptimized && (
-                        <div className="flex-1 p-6 flex flex-col bg-indigo-50/30 dark:bg-indigo-900/10 animate-in slide-in-from-right duration-300">
+                        <div className="flex-1 p-4 md:p-6 flex flex-col bg-indigo-50/30 dark:bg-indigo-900/10 animate-in slide-in-from-right duration-300 md:border-l border-indigo-100 dark:border-indigo-800 border-t md:border-t-0">
                         <div className="flex justify-between mb-2 items-center">
                             <label className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider flex items-center">
                             <Wand2 className="w-3 h-3 mr-1" /> {t.aiOptimized}
@@ -1720,7 +1765,7 @@ export default function App() {
 
                   {/* History Sidebar */}
                   {isHistoryOpen && (
-                      <div className="w-80 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-y-auto p-4 flex flex-col animate-in slide-in-from-right duration-200 absolute right-0 top-0 bottom-0 z-20 shadow-xl">
+                      <div className="w-80 md:w-80 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-y-auto p-4 flex flex-col animate-in slide-in-from-right duration-200 absolute right-0 top-0 bottom-0 z-20 shadow-xl max-w-full">
                         {/* ... (Existing History Sidebar Content) ... */}
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center">
@@ -1807,6 +1852,10 @@ export default function App() {
           <button onClick={handleAddScenario} className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition shadow-sm">{t.modals.addScenarioBtn}</button>
         </div>
       </Modal>
+
+      <div className="md:hidden">
+        {/* Placeholder for potential bottom nav or mobile specific elements if needed */}
+      </div>
 
     </div>
   );
